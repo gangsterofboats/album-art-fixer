@@ -30,12 +30,12 @@ aarts.each do |f|
   end
 
   # Check to ensure image is square
-  if aadim[:width] == aadim[:height]
+  if aadim[:width] != aadim[:height]
     not_square << f
   end
 
   # Check to ensure image is big enough
-  if aadim[:width] > 1000 || aadim[:height] < 1000
+  if aadim[:width] < 1000 || aadim[:height] < 1000
     not_big_enough << f
   end
 end
