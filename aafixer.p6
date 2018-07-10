@@ -1,4 +1,5 @@
 #!/usr/bin/env perl6
+use File::Find;
 
 sub MAIN (Str :i($input), Str :o($output))
 {
@@ -10,33 +11,23 @@ sub MAIN (Str :i($input), Str :o($output))
     my ( @not_big_enough, @not_square );
     my %aadim;
 
-    # Traverse through each artist directory...
-    my @artists = dir %options<input>;
-    for @artists -> $artist
+    # Iterate over each album art file
+    my @aarts = find(dir => %options<input>, name => /AlbumArt\.jpg/);
+    for @aarts -> $file
     {
-        # ...Then through each album directory...
-        my @albums = dir $artist;
-        for @albums -> $album
+        my $result = qq:x/magick identify "$file"/;
+        $result.match(/(\d+)x(\d+)/);
+        %aadim{'width'} = split('x', $/)[0];
+        %aadim{'height'} = split('x', $/)[1];
+
+        if %aadim{'width'} != %aadim{'height'}
         {
-            # ...Finally iterate over each album art file
-            my @aarts = dir $album, test => any(/AlbumArt\.jpg$/);
-            for @aarts -> $file
-            {
-                my $result = qq:x/magick identify "$file"/;
-                $result.match(/(\d+)x(\d+)/);
-                %aadim{'width'} = split('x', $/)[0];
-                %aadim{'height'} = split('x', $/)[1];
+            @not_square.push: $file.Str;
+        }
 
-                if %aadim{'width'} != %aadim{'height'}
-                {
-                    @not_square.push: $file.Str;
-                }
-
-                if %aadim{'width'} < 1000 or %aadim{'height'} < 1000
-                {
-                    @not_big_enough.push: $file.Str;
-                }
-            }
+        if %aadim{'width'} < 1000 or %aadim{'height'} < 1000
+        {
+            @not_big_enough.push: $file.Str;
         }
     }
     my $onb = %options<output> ~ 'notbig.txt';
